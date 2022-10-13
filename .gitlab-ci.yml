@@ -28,7 +28,7 @@ build-linux:
   stage: build
   image: mcr.microsoft.com/dotnet/sdk:6.0
   script:
-    - dotnet publish YamlToHCL -r linux-x64 -c Release -sc
+    - dotnet publish YamlToHCL -r linux-x64 -c Release --sc
   artifacts:
     untracked: false
     expire_in: "30 days"
