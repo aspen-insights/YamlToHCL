@@ -17,11 +17,12 @@ build-win:
   image: mcr.microsoft.com/dotnet/sdk:6.0
   script:
     - dotnet publish YamlToHCL -r win-x64 -c Release --no-self-contained
+    - cp YamlToHCL/bin/Release/net6.0-windows/win-x64/publish/YamlToHCL.exe ./YamlToHCL.exe
   artifacts:
     untracked: false
     expire_in: "30 days"
     paths:
-      - "YamlToHCL/bin/Release/net6.0-windows/win-x64/publish/YamlToHCL.exe"
+      - "./YamlToHCL.exe"
 
 build-linux:
   retry: 2
@@ -29,8 +30,9 @@ build-linux:
   image: mcr.microsoft.com/dotnet/sdk:6.0
   script:
     - dotnet publish YamlToHCL -r linux-x64 -c Release --sc
+    - cp YamlToHCL/bin/Release/net6.0-windows/linux-x64/publish/YamlToHCL ./YamlToHCL
   artifacts:
     untracked: false
     expire_in: "30 days"
     paths:
-      - "YamlToHCL/bin/Release/net6.0-windows/linux-x64/publish/YamlToHCL"
+      - "./YamlToHCL"
