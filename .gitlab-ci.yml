@@ -1,0 +1,32 @@
+variables: 
+  NO_BUILD: 'true'
+  NO_DEPLOY: 'true'
+
+include:
+  project: 'aspeninsights/aspen-ci'
+  file: aspen-ci.yml
+
+stages:
+  - build
+  - test
+  - apply
+
+build-win:
+  retry: 2
+  script:
+    - dotnet publish YamlToHCL -r win-x64 -c Release --no-self-contained
+  artifacts:
+    untracked: false
+    expire_in: "30 days"
+    paths:
+      - "YamlToHCL/bin/Release/net6.0-windows/win-x64/publish/YamlToHCL.exe"
+
+build-linux:
+  retry: 2
+  script:
+    - dotnet publish YamlToHCL -r linux-x64 -c Release -sc
+  artifacts:
+    untracked: false
+    expire_in: "30 days"
+    paths:
+      - "YamlToHCL/bin/Release/net6.0-windows/linux-x64/publish/YamlToHCL"
