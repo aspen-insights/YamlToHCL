@@ -13,6 +13,7 @@ stages:
 
 build-win:
   retry: 2
+  stage: build
   script:
     - dotnet publish YamlToHCL -r win-x64 -c Release --no-self-contained
   artifacts:
@@ -23,6 +24,7 @@ build-win:
 
 build-linux:
   retry: 2
+  stage: build
   script:
     - dotnet publish YamlToHCL -r linux-x64 -c Release -sc
   artifacts:
