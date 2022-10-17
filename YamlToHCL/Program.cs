@@ -7,36 +7,68 @@ Dictionary<Type, int> _TypeOrder = new()
     { typeof(Dictionary<object, object>), 1}
 };
 
-string fileName = "";
-if (args.Length > 0)
-    fileName = args[0];
-else
-    throw new ArgumentException("No file specified");
-
+var fileName = "";
 var _sort = Sort.None;
-if (args.Length > 1)
-    if (!Enum.TryParse<Sort>(args[1], out _sort))
-        throw new ArgumentException($"Invalid Sort. Sort must be one of {Enum.GetValues(typeof(Sort)).Cast<Sort>().Aggregate("", (current, next) => current + ", " + next)}");
+var verbose = false;
 
-string yaml = "";
+var index = 0;
+foreach(var arg in args)
+{
+    index++;
+    if (arg.StartsWith("-"))
+        switch (arg)
+        {
+            case "--file" or "-f":
+                fileName = args[index + 1];
+                break;
+
+            case "--sort" or "-s":
+                if (!Enum.TryParse<Sort>(args[index + 1], out _sort))
+                    Console.WriteLine($"Invalid Sort. Sort must be one of {Enum.GetValues(typeof(Sort)).Cast<Sort>().Aggregate("", (current, next) => current + ", " + next)}");
+                break;
+
+            case "--verbose" or "-v":
+                verbose = true;
+                break;
+        }
+}
+
+var yaml = new List<string>() { String.Empty };
+index = 0;
+using var reader = new StreamReader(fileName);
+
 if (File.Exists(fileName))
-    yaml = File.ReadAllText($"{fileName}");
+    while (!reader.EndOfStream)
+    {
+        var line = reader.ReadLine();
+
+        if(line.StartsWith("---") || line.StartsWith("..."))
+        {
+            index++;
+            yaml.Add(String.Empty);
+            continue;
+        }
+
+        yaml[index] += $"\n{line}";
+    }
 else
-    throw new Exception($"Could not find file: {fileName}");
+    Console.WriteLine($"Could not find file: {fileName}");
 
 var deserializer = new DeserializerBuilder().Build();
 
-Dictionary<object, object> yamlObject;
 try
 {
-    yamlObject = deserializer.Deserialize<Dictionary<object, object>>(yaml);
+    yaml.Select(x => deserializer.Deserialize<Dictionary<object, object>>(x))
+        .ToList()
+        .ForEach(x => NestedDictIteration(x));
 }
 catch (Exception)
 {
-    throw new Exception("Could not deserialize specified file. Make sure it is valid yaml and that it only contains a single yaml object");
+    if (verbose)
+        throw;
+    else
+        Console.WriteLine("Could not deserialize specified file. Make sure it is valid yaml");
 }
-
-NestedDictIteration(yamlObject);
 
 void NestedDictIteration(Dictionary<object, object> nestedDict, int indent = -1)
 {
