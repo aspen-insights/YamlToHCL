@@ -8,12 +8,13 @@ Dictionary<Type, int> _TypeOrder = new()
     { typeof(Dictionary<object, object>), 1}
 };
 
-var files = new List<string>() { @"C:\Users\JohnnyGiddings\Desktop\Repos\aspen-aks\argo\argo-values.yml" };
+var files = new List<string>();
 var sort = Sort.None;
-var verbose = true;
+var verbose = false;
 var terraform = Terraform.None;
 var manifestCount = 0;
 var fileOut = false;
+var removeEmpty = false;
 FileStream currentFile = null;
 
 const char _indentChar = ' ';
@@ -52,6 +53,10 @@ foreach(var arg in args)
 
             case "--file-out" or "-fo":
                 fileOut = true;
+                break;
+
+            case "--remove-empty" or "-re":
+                removeEmpty = true;
                 break;
         }
     index++;
@@ -143,6 +148,8 @@ void NestedDictIteration(Dictionary<object, object> nestedDict, int indent = -1)
 
         if (kvp.Value is string value)
         {
+            if (String.IsNullOrEmpty(value) && removeEmpty) continue;
+
             if (String.IsNullOrEmpty(value))
                 Output($"{getPrefix(_indentChar, indent, _indentFactor)}{key} = \"\"");
             else if (value.All(Char.IsDigit) || value == "true" || value == "false") //Do not include quotes for numerical or boolean values (YamlDotNet interprets all numerical values as strings, so this is the best we have)
@@ -154,6 +161,8 @@ void NestedDictIteration(Dictionary<object, object> nestedDict, int indent = -1)
         }
         else if (kvp.Value is List<object> list)
         {
+            if (list.Count == 0 && removeEmpty) continue;
+
             if (list.Count == 0)
                 Output($"{getPrefix(_indentChar, indent, _indentFactor)}{key} = []");
             else if (list.Count == 1 && list[0] is string singleItem)
@@ -180,6 +189,8 @@ void NestedDictIteration(Dictionary<object, object> nestedDict, int indent = -1)
         }
         else if (kvp.Value is Dictionary<object, object> dictionary)
         {
+            if (dictionary.Count == 0 && removeEmpty) continue; 
+
             if (dictionary.Count > 0)
             {
                 Output($"{getPrefix(_indentChar, indent, _indentFactor)}{key} = {{");
@@ -191,7 +202,9 @@ void NestedDictIteration(Dictionary<object, object> nestedDict, int indent = -1)
                 Output($"{getPrefix(_indentChar, indent, _indentFactor)}{key} = {{}}");
         }
         else if (kvp.Value is null)
-            Output($"{getPrefix(_indentChar, indent, _indentFactor)}{key} = null");
+        {
+            if (!removeEmpty) Output($"{getPrefix(_indentChar, indent, _indentFactor)}{key} = null");
+        }
         else
             NestedDictIteration((Dictionary<object, object>)kvp.Value, indent);
     }
